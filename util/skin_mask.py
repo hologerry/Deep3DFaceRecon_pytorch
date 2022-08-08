@@ -7,6 +7,8 @@ import os
 import cv2
 import numpy as np
 
+from tqdm import trange
+
 
 class GMM:
     def __init__(self, dim, num, w, mu, cov, cov_det, cov_inv):
@@ -167,13 +169,14 @@ def skinmask(imbgr):
 def get_skin_mask(img_path):
     print("generating skin masks......")
     names = [i for i in sorted(os.listdir(img_path)) if "jpg" in i or "png" in i or "jpeg" in i or "PNG" in i]
-    save_path = os.path.join(img_path, "mask")
+    base_dir = os.path.dirname(img_path)
+    base_name = os.path.basename(img_path)
+    save_path = os.path.join(base_dir, "mask")
     if not os.path.isdir(save_path):
         os.makedirs(save_path)
 
-    for i in range(0, len(names)):
+    for i in trange(len(names), desc=base_name):
         name = names[i]
-        print("%05d" % (i), " ", name)
         full_image_name = os.path.join(img_path, name)
         img = cv2.imread(full_image_name).astype(np.float32)
         skin_img = skinmask(img)

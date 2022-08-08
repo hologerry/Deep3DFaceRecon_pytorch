@@ -204,9 +204,9 @@ def align_img_tensor(img_tensor, lm, lm3D, target_size=224.0, rescale_factor=102
 def save_mesh(face_model, pred_vertex, pred_color, file_name):
     recon_shape = pred_vertex  # get reconstructed shape
     recon_shape[..., -1] = 10 - recon_shape[..., -1]  # from camera space to world space
-    recon_shape = recon_shape.detach().cpu().numpy()[1]
+    recon_shape = recon_shape.detach().cpu().numpy()[0]
     recon_color = pred_color
-    recon_color = recon_color.detach().cpu().numpy()[1]
+    recon_color = recon_color.detach().cpu().numpy()[0]
     tri = face_model.face_buf.cpu().numpy()
     mesh = trimesh.Trimesh(
         vertices=recon_shape, faces=tri, vertex_colors=np.clip(255.0 * recon_color, 0, 255).astype(np.uint8)
@@ -218,8 +218,9 @@ def main(net_recon, face_model, renderer):
 
     shape_predictor_path = "shape_predictor/shape_predictor_68_face_landmarks.dat"
     # test_img_path = "datasets/examples/000002.jpg"
-    test_img_path_1 = "datasets/talkinghead-val/000001.png"
-    test_img_path_2 = "datasets/examples/000002.jpg"
+    test_img_path_1 = "datasets/talkinghead-val/000277_rec.png"
+    test_img_path_2 = "datasets/talkinghead-val/000277_rec.png"
+    # test_img_path_2 = "datasets/talkinghead-val/000277_rec.png"
 
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor(shape_predictor_path)
@@ -286,7 +287,7 @@ def main(net_recon, face_model, renderer):
     print("pred_lm:", pred_lm.shape)
     pred_mask, _, pred_face = renderer(pred_vertex, face_model.face_buf, feat=pred_color)
     pred_coeffs_dict = face_model.split_coeff(output_coeff)
-    save_mesh(face_model, pred_vertex, pred_color, "vis_test/pred_mesh.obj")
+    save_mesh(face_model, pred_vertex, pred_color, "vis_test/00027_rec_pred_mesh.obj")
     save_image(aligned_images_tensor, "vis_test/aligned_img_tensor.png")
 
 

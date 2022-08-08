@@ -6,7 +6,9 @@ import cv2
 import numpy as np
 import tensorflow as tf
 
+from cv2 import imread
 from scipy.io import loadmat
+from tqdm import trange
 
 from util.preprocess import align_for_lm
 
@@ -40,8 +42,28 @@ def draw_landmarks(img, landmark, save_name):
     cv2.imwrite(save_name, lm_img)
 
 
+def crop_square(img, size=256, interpolation=cv2.INTER_AREA):
+    h, w = img.shape[:2]
+    min_size = np.amin([h, w])
+
+    # Centralize and crop
+    crop_img = img[
+        int(h / 2 - min_size / 2) : int(h / 2 + min_size / 2),
+        int(w / 2 - min_size / 2) : int(w / 2 + min_size / 2),
+    ]
+    resized = cv2.resize(crop_img, (size, size), interpolation=interpolation)
+
+    return resized
+
+
+def read_image(image_path):
+    img = imread(image_path)
+    img = crop_square(img)
+    return img
+
+
 def load_data(img_name, txt_name):
-    return cv2.imread(img_name), np.loadtxt(txt_name)
+    return read_image(img_name), np.loadtxt(txt_name)
 
 
 # create tensorflow graph for landmark detector
@@ -63,9 +85,10 @@ def load_lm_graph(graph_filename):
 def detect_68p(img_path, sess, input_op, output_op):
     print("detecting landmarks......")
     names = [i for i in sorted(os.listdir(img_path)) if "jpg" in i or "png" in i or "jpeg" in i or "PNG" in i]
-    vis_path = os.path.join(img_path, "vis")
-    remove_path = os.path.join(img_path, "remove")
-    save_path = os.path.join(img_path, "landmarks")
+    base_dir = os.path.dirname(img_path)
+    vis_path = os.path.join(base_dir, "vis")
+    remove_path = os.path.join(base_dir, "remove")
+    save_path = os.path.join(base_dir, "landmarks")
     if not os.path.isdir(vis_path):
         os.makedirs(vis_path)
     if not os.path.isdir(remove_path):
@@ -73,16 +96,15 @@ def detect_68p(img_path, sess, input_op, output_op):
     if not os.path.isdir(save_path):
         os.makedirs(save_path)
 
-    for i in range(0, len(names)):
+    for i in trange(len(names)):
         name = names[i]
-        print("%05d" % (i), " ", name)
         full_image_name = os.path.join(img_path, name)
         txt_name = ".".join(name.split(".")[:-1]) + ".txt"
-        full_txt_name = os.path.join(img_path, "detections", txt_name)  # 5 facial landmark path for each image
+        full_txt_name = os.path.join(base_dir, "detections", txt_name)  # 5 facial landmark path for each image
 
         # if an image does not have detected 5 facial landmarks, remove it from the training list
         if not os.path.isfile(full_txt_name):
-            move(full_image_name, os.path.join(remove_path, name))
+            # move(full_image_name, os.path.join(remove_path, name))
             continue
 
         # load data
@@ -91,8 +113,8 @@ def detect_68p(img_path, sess, input_op, output_op):
 
         # if the alignment fails, remove corresponding image from the training list
         if scale == 0:
-            move(full_txt_name, os.path.join(remove_path, txt_name))
-            move(full_image_name, os.path.join(remove_path, name))
+            # move(full_txt_name, os.path.join(remove_path, txt_name))
+            # move(full_image_name, os.path.join(remove_path, name))
             continue
 
         # detect landmarks
@@ -107,6 +129,6 @@ def detect_68p(img_path, sess, input_op, output_op):
         landmark[:, 1] = landmark[:, 1] + bbox[1]
         landmark[:, 1] = img.shape[0] - 1 - landmark[:, 1]
 
-        if i % 100 == 0:
+        if i <= 100:
             draw_landmarks(img, landmark, os.path.join(vis_path, name))
         save_label(landmark, os.path.join(save_path, txt_name))

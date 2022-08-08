@@ -89,7 +89,7 @@ class FlistDataset(BaseDataset):
             aug_flag (bool)    -- a flag used to tell whether its raw or augmented
         """
         msk_path = self.msk_paths[index % self.size]  # make sure index is within then range
-        img_path = msk_path.replace("mask/", "")
+        img_path = msk_path.replace("mask/", "image/")
         lm_path = ".".join(msk_path.replace("mask", "landmarks").split(".")[:-1]) + ".txt"
 
         raw_img = Image.open(img_path).convert("RGB")

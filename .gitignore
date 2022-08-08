@@ -168,3 +168,4 @@ vis_test
 models/arcface_torch
 nvdiffrast
 insightface
+val_case_video
