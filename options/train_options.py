@@ -20,6 +20,40 @@ class TrainOptions(BaseOptions):
         parser.add_argument(
             "--flist", type=str, default="datalist/train/masks.txt", help="list of mask names of training set"
         )
+
+        parser.add_argument(
+            "--video_names_json",
+            type=str,
+            default="data/TalkingHead-1KH_datasets/all_in_one_filtered/train_good_video_names.json",
+            help="json file of video names",
+        )
+        # parser.add_argument("--split", type=str, default="train", help="train/val/test")
+        parser.add_argument(
+            "--video_dir",
+            default="data/TalkingHead-1KH_datasets/train/cropped_clips",
+            help="videos",
+        )
+        parser.add_argument(
+            "--landmark_dir",
+            default="data/TalkingHead-1KH_datasets/train_good_video_landmarks_json_256",
+            help="path to output landmarks",
+        )
+        parser.add_argument(
+            "--video_names_json_val",
+            type=str,
+            default="data/TalkingHead-1KH_datasets/val/cropped_clips_videos_names.json",
+            help="json file of video names",
+        )
+        parser.add_argument(
+            "--video_dir_val",
+            default="data/TalkingHead-1KH_datasets/val/cropped_clips",
+            help="videos",
+        )
+        parser.add_argument(
+            "--landmark_dir_val",
+            default="data/TalkingHead-1KH_datasets/val_video_landmarks_json_256",
+            help="path to output landmarks",
+        )
         parser.add_argument("--batch_size", type=int, default=32)
         parser.add_argument(
             "--dataset_mode", type=str, default="flist", help="chooses how datasets are loaded. [None | flist]"
@@ -29,7 +63,7 @@ class TrainOptions(BaseOptions):
             action="store_true",
             help="if true, takes images in order to make batches, otherwise takes them randomly",
         )
-        parser.add_argument("--num_threads", default=4, type=int, help="# threads for loading data")
+        parser.add_argument("--num_threads", default=8, type=int, help="# threads for loading data")
         parser.add_argument(
             "--max_dataset_size",
             type=int,
@@ -78,7 +112,7 @@ class TrainOptions(BaseOptions):
         )
         parser.add_argument("--phase", type=str, default="train", help="train, val, test, etc")
         parser.add_argument(
-            "--pretrained_name", type=str, default=None, help="resume training from another checkpoint"
+            "--pretrained_name", type=str, default='checkpoints/face_recon_feat0.2_augment/epoch_20.pth', help="resume training from another checkpoint"
         )
 
         # training parameters

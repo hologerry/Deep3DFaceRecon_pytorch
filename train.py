@@ -29,7 +29,7 @@ def cleanup():
 
 
 def main(rank, world_size, train_opt):
-    val_opt = genvalconf(train_opt, isTrain=False)
+    val_opt = genvalconf(train_opt, isTrain=False, batch_size=4)
 
     device = torch.device(rank)
     torch.cuda.set_device(device)
