@@ -102,6 +102,9 @@ class BaseModel(ABC):
         if self.isTrain:
             self.schedulers = [networks.get_scheduler(optimizer, opt) for optimizer in self.optimizers]
 
+        if opt.pretrained_name:
+            self.load_networks(0)
+
         if not self.isTrain or opt.continue_train:
             load_suffix = opt.epoch
             self.load_networks(load_suffix)
@@ -201,7 +204,7 @@ class BaseModel(ABC):
         return visual_ret
 
     def get_current_losses(self):
-        """Return traning losses / errors. train.py will print out these errors on console, and save them to a file"""
+        """Return training losses / errors. train.py will print out these errors on console, and save them to a file"""
         errors_ret = OrderedDict()
         for name in self.loss_names:
             if isinstance(name, str):
@@ -261,11 +264,11 @@ class BaseModel(ABC):
             epoch (int) -- current epoch; used in the file name '%s_net_%s.pth' % (epoch, name)
         """
         if self.opt.isTrain and self.opt.pretrained_name is not None:
-            load_dir = os.path.join(self.opt.checkpoints_dir, self.opt.pretrained_name)
+            load_path = os.path.join(self.opt.checkpoints_dir, self.opt.pretrained_name)
         else:
             load_dir = self.save_dir
-        load_filename = "epoch_%s.pth" % (epoch)
-        load_path = os.path.join(load_dir, load_filename)
+            load_filename = "epoch_%s.pth" % (epoch)
+            load_path = os.path.join(load_dir, load_filename)
         state_dict = torch.load(load_path, map_location=self.device)
         print("loading the model from %s" % load_path)
 

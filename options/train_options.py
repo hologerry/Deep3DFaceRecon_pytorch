@@ -112,7 +112,7 @@ class TrainOptions(BaseOptions):
         )
         parser.add_argument("--phase", type=str, default="train", help="train, val, test, etc")
         parser.add_argument(
-            "--pretrained_name", type=str, default='checkpoints/face_recon_feat0.2_augment/epoch_20.pth', help="resume training from another checkpoint"
+            "--pretrained_name", type=str, default='face_recon_feat0.2_augment/epoch_20.pth', help="resume training from another checkpoint"
         )
 
         # training parameters

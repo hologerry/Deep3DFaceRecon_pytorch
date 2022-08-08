@@ -182,10 +182,7 @@ class BaseOptions:
 
         if opt.phase != "test":
             # set continue_train automatically
-            if opt.pretrained_name is None:
-                model_dir = os.path.join(opt.checkpoints_dir, opt.name)
-            else:
-                model_dir = os.path.join(opt.checkpoints_dir, opt.pretrained_name)
+            model_dir = os.path.join(opt.checkpoints_dir, opt.name)
             if os.path.isdir(model_dir):
                 model_pths = [i for i in os.listdir(model_dir) if i.endswith("pth")]
                 if os.path.isdir(model_dir) and len(model_pths) != 0:
