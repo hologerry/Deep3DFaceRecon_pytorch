@@ -1,6 +1,3 @@
-"""This script defines the face reconstruction model for Deep3DFaceRecon_pytorch
-"""
-
 import numpy as np
 import torch
 import trimesh
@@ -120,10 +117,8 @@ class FaceReconModel(BaseModel):
 
     def __init__(self, opt):
         """Initialize this model class.
-
         Parameters:
             opt -- training/test options
-
         A few things can be done here.
         - (required) call the initialization function of BaseModel
         - define loss function, visualization images, model names, and optimizers
@@ -162,7 +157,7 @@ class FaceReconModel(BaseModel):
             image_size=int(2 * opt.center),
             blur_radius=0.0,
             faces_per_pixel=1,
-            bin_size=None,
+            bin_size=-1,
         )
 
         self.mesh_rasterizer = MeshRasterizer(cameras=cameras, raster_settings=raster_settings)
@@ -178,7 +173,7 @@ class FaceReconModel(BaseModel):
             self.net_recog = networks.define_net_recog(net_recog=opt.net_recog, pretrained_path=opt.net_recog_path)
             # loss func name: (compute_%s_loss) % loss_name
             self.compute_feat_loss = perceptual_loss
-            self.compute_color_loss = photo_loss
+            self.comupte_color_loss = photo_loss
             self.compute_lm_loss = landmark_loss
             self.compute_reg_loss = reg_loss
             self.compute_reflc_loss = reflectance_loss
@@ -190,7 +185,6 @@ class FaceReconModel(BaseModel):
 
     def set_input(self, input):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
-
         Parameters:
             input: a dictionary that contains the data itself and its metadata information.
         """
@@ -202,7 +196,7 @@ class FaceReconModel(BaseModel):
 
     def forward(self):
         output_coeff = self.net_recon(self.input_img)
-        self.facemodel.to(self.device)
+        # self.facemodel.to(self.device)
         self.mesh_rasterizer.to(self.device)
         self.pred_vertex, self.pred_tex, self.pred_color, self.pred_lm = self.facemodel.compute_for_render(
             output_coeff
@@ -210,8 +204,6 @@ class FaceReconModel(BaseModel):
         self.pred_mask, _, self.pred_face = self.renderer(
             self.mesh_rasterizer, self.pred_vertex, self.facemodel.face_buf, feat=self.pred_color
         )
-        self.pred_coeffs_dict = self.facemodel.split_coeff(output_coeff)
-
         self.pred_coeffs_dict = self.facemodel.split_coeff(output_coeff)
 
     def compute_losses(self):
@@ -228,10 +220,10 @@ class FaceReconModel(BaseModel):
 
         face_mask = self.pred_mask
         if self.opt.use_crop_face:
-
             face_mask, _, _ = self.renderer(self.mesh_rasterizer, self.pred_vertex, self.facemodel.front_face_buf)
+
         face_mask = face_mask.detach()
-        self.loss_color = self.opt.w_color * self.compute_color_loss(
+        self.loss_color = self.opt.w_color * self.comupte_color_loss(
             self.pred_face, self.input_img, self.atten_mask * face_mask
         )
 

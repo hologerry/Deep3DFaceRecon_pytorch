@@ -3,26 +3,30 @@
 """
 from typing import List
 
+import kornia
 import numpy as np
 import pytorch3d.ops
 import torch
 import torch.nn.functional as F
 
 from kornia.geometry.camera import pixel2cam
-from pytorch3d.renderer import (
-    DirectionalLights,
-    FoVPerspectiveCameras,
-    MeshRasterizer,
-    MeshRenderer,
-    RasterizationSettings,
-    SoftPhongShader,
-    TexturesUV,
-    look_at_view_transform,
-)
 from pytorch3d.structures import Meshes
 from scipy.io import loadmat
 from torch import nn
 
+
+"""
+from pytorch3d.renderer import (
+    look_at_view_transform,
+    FoVPerspectiveCameras,
+    DirectionalLights,
+    RasterizationSettings,
+    MeshRenderer,
+    MeshRasterizer,
+    SoftPhongShader,
+    TexturesUV,
+)
+"""
 
 # def ndc_projection(x=0.1, n=1.0, f=50.0):
 #     return np.array([[n/x,    0,            0,              0],
@@ -61,7 +65,6 @@ class MeshRenderer(nn.Module):
         # trans to homogeneous coordinates of 3d vertices, the direction of y is the same as v
         if vertex.shape[-1] == 3:
             vertex = torch.cat([vertex, torch.ones([*vertex.shape[:2], 1]).to(device)], dim=-1)
-
             vertex[..., 0] = -vertex[..., 0]
 
         # vertex_ndc = vertex @ ndc_proj.t()
@@ -118,7 +121,6 @@ class MeshRenderer(nn.Module):
         # render depth
         depth = depth.permute(0, 3, 1, 2)
         mask = (rast_out > 0).float().unsqueeze(1)
-
         depth = mask * depth
 
         image = None
