@@ -129,7 +129,7 @@ class BaseModel(ABC):
                         torch.nn.parallel.DistributedDataParallel(
                             module.to(self.device),
                             device_ids=[self.device.index],
-                            find_unused_parameters=True,
+                            find_unused_parameters=False,  # False for faster training
                             broadcast_buffers=True,
                         ),
                     )

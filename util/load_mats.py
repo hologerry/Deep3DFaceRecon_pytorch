@@ -123,7 +123,7 @@ def load_lm3d(bfm_folder):
 
     Lm3D = loadmat(osp.join(bfm_folder, "similarity_Lm3D_all.mat"))
     Lm3D = Lm3D["lm"]
-    print("lm3d shape: ", Lm3D.shape)
+    # print("lm3d shape: ", Lm3D.shape)
 
     # calculate 5 facial landmarks using 68 landmarks
     lm_idx = np.array([31, 37, 40, 43, 46, 49, 55]) - 1

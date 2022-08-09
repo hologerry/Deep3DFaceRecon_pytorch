@@ -132,6 +132,7 @@ class FaceReconModel(BaseModel):
             center=opt.center,
             is_train=self.isTrain,
             default_name=opt.bfm_model,
+            device="cuda",
         )
 
         fov = 2 * np.arctan(opt.center / opt.focal) * 180 / np.pi
@@ -145,7 +146,7 @@ class FaceReconModel(BaseModel):
             self.net_recog = networks.define_net_recog(net_recog=opt.net_recog, pretrained_path=opt.net_recog_path)
             # loss func name: (compute_%s_loss) % loss_name
             self.compute_feat_loss = perceptual_loss
-            self.comupte_color_loss = photo_loss
+            self.compute_color_loss = photo_loss
             self.compute_lm_loss = landmark_loss
             self.compute_reg_loss = reg_loss
             self.compute_reflc_loss = reflectance_loss
@@ -169,17 +170,16 @@ class FaceReconModel(BaseModel):
 
     def forward(self):
         output_coeff = self.net_recon(self.input_img)
-        print("grad", output_coeff.requires_grad)
+        # print("grad", output_coeff.requires_grad)
         # print(self.net_recon)
-        print("output_coeff:", output_coeff.shape)
-        self.facemodel.to(self.device)
+        # print("output_coeff:", output_coeff.shape)
         self.pred_vertex, self.pred_tex, self.pred_color, self.pred_lm = self.facemodel.compute_for_render(
             output_coeff
         )
-        print("pred_vertex:", self.pred_vertex.shape)
-        print("pred_tex:", self.pred_tex.shape)
-        print("pred_color:", self.pred_color.shape)
-        print("pred_lm:", self.pred_lm.shape)
+        # print("pred_vertex:", self.pred_vertex.shape)
+        # print("pred_tex:", self.pred_tex.shape)
+        # print("pred_color:", self.pred_color.shape)
+        # print("pred_lm:", self.pred_lm.shape)
         self.pred_mask, _, self.pred_face = self.renderer(
             self.pred_vertex, self.facemodel.face_buf, feat=self.pred_color
         )
@@ -203,7 +203,7 @@ class FaceReconModel(BaseModel):
             face_mask, _, _ = self.renderer(self.pred_vertex, self.facemodel.front_face_buf)
 
         face_mask = face_mask.detach()
-        self.loss_color = self.opt.w_color * self.comupte_color_loss(
+        self.loss_color = self.opt.w_color * self.compute_color_loss(
             self.pred_face, self.input_img, self.atten_mask * face_mask
         )
 

@@ -276,18 +276,23 @@ class VideoDataset(BaseDataset):
         landmark_json_file = os.path.join(self.landmark_dir, video_basename + ".json")
         with open(landmark_json_file) as f:
             landmark_dict = json.load(f)
-        video = cv2.VideoCapture(video_file)
-        frame_count = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
-        frame_idx = random.randint(0, frame_count - 1)
-        while str(frame_idx) not in landmark_dict:
-            frame_idx = random.randint(0, frame_count - 1)
 
+        # frame_count = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+        # frame_idx = random.randint(0, frame_count - 1)
+        # while str(frame_idx) not in landmark_dict:
+        #     frame_idx = random.randint(0, frame_count - 1)
+
+        frame_ids = landmark_dict.keys()
+        frame_ids = [int(x) for x in frame_ids]
+        frame_idx = random.choice(frame_ids)
         landmark = landmark_dict[str(frame_idx)]
+
+        video = cv2.VideoCapture(video_file)
         video.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
         res, frame = video.read()
 
         frame = crop_square(frame, 224)
-        landmark = np.array(landmark) / 256.0 * 224.0
+        landmark = np.array(landmark) / 255.0 * 223.0
         landmark[:, 1] = 223 - landmark[:, 1]
         mask = skinmask(frame)
 

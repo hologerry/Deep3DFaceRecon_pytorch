@@ -24,7 +24,7 @@ class TrainOptions(BaseOptions):
         parser.add_argument(
             "--video_names_json",
             type=str,
-            default="data/TalkingHead-1KH_datasets/all_in_one_filtered/train_good_video_names.json",
+            default="data/TalkingHead-1KH_datasets/landmark/train_good_video_landmarks_json_256_non_empty.json",
             help="json file of video names",
         )
         # parser.add_argument("--split", type=str, default="train", help="train/val/test")
@@ -35,13 +35,13 @@ class TrainOptions(BaseOptions):
         )
         parser.add_argument(
             "--landmark_dir",
-            default="data/TalkingHead-1KH_datasets/train_good_video_landmarks_json_256",
+            default="data/TalkingHead-1KH_datasets/landmark/train_good_video_landmarks_json_256",
             help="path to output landmarks",
         )
         parser.add_argument(
             "--video_names_json_val",
             type=str,
-            default="data/TalkingHead-1KH_datasets/val/cropped_clips_videos_names.json",
+            default="data/TalkingHead-1KH_datasets/landmark/val_video_landmarks_json_256_non_empty.json",
             help="json file of video names",
         )
         parser.add_argument(
@@ -51,7 +51,7 @@ class TrainOptions(BaseOptions):
         )
         parser.add_argument(
             "--landmark_dir_val",
-            default="data/TalkingHead-1KH_datasets/val_video_landmarks_json_256",
+            default="data/TalkingHead-1KH_datasets/landmark/val_video_landmarks_json_256",
             help="path to output landmarks",
         )
         parser.add_argument("--batch_size", type=int, default=32)
@@ -84,7 +84,7 @@ class TrainOptions(BaseOptions):
         parser.add_argument(
             "--flist_val", type=str, default="datalist/val/masks.txt", help="list of mask names of val set"
         )
-        parser.add_argument("--batch_size_val", type=int, default=32)
+        parser.add_argument("--batch_size_val", type=int, default=4)
 
         # visualization parameters
         parser.add_argument(
@@ -122,7 +122,7 @@ class TrainOptions(BaseOptions):
             "--lr_policy", type=str, default="step", help="learning rate policy. [linear | step | plateau | cosine]"
         )
         parser.add_argument(
-            "--lr_decay_epochs", type=int, default=10, help="multiply by a gamma every lr_decay_epochs epoches"
+            "--lr_decay_epochs", type=int, default=10, help="multiply by a gamma every lr_decay_epochs epochs"
         )
 
         self.isTrain = True

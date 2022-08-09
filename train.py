@@ -29,7 +29,7 @@ def cleanup():
 
 
 def main(rank, world_size, train_opt):
-    val_opt = genvalconf(train_opt, isTrain=False, batch_size=4)
+    val_opt = genvalconf(train_opt, isTrain=False)
 
     device = torch.device(rank)
     torch.cuda.set_device(device)
@@ -50,11 +50,8 @@ def main(rank, world_size, train_opt):
     model.parallelize()
 
     if rank == 0:
-        print(
-            "The batch number of training images = %d\n, \
-            the batch number of validation images = %d"
-            % (train_dataset_batches, val_dataset_batches)
-        )
+        print(f"The batch number of training images = {train_dataset_batches},")
+        print(f"the batch number of validation images = {val_dataset_batches}")
         model.print_networks(train_opt.verbose)
         visualizer = MyVisualizer(train_opt)  # create a visualizer that display/save images and plots
 
