@@ -5,6 +5,16 @@ import numpy as np
 import torch
 import trimesh
 
+# ------pytorch3d ----
+from pytorch3d.renderer import (
+    DirectionalLights,
+    FoVPerspectiveCameras,
+    MeshRasterizer,
+    RasterizationSettings,
+    SoftPhongShader,
+    TexturesUV,
+    look_at_view_transform,
+)
 from scipy.io import savemat
 
 from util import util
@@ -21,6 +31,9 @@ from .losses import (
     reflectance_loss,
     reg_loss,
 )
+
+
+# ------pytorch3d ----
 
 
 class FaceReconModel(BaseModel):
@@ -136,6 +149,25 @@ class FaceReconModel(BaseModel):
         )
 
         fov = 2 * np.arctan(opt.center / opt.focal) * 180 / np.pi
+
+        # ----change  ------
+        # rasterize
+        cameras = FoVPerspectiveCameras(
+            fov=fov,
+            znear=opt.z_near,
+            zfar=opt.z_far,
+        )
+
+        raster_settings = RasterizationSettings(
+            image_size=int(2 * opt.center),
+            blur_radius=0.0,
+            faces_per_pixel=1,
+            bin_size=None,
+        )
+
+        self.mesh_rasterizer = MeshRasterizer(cameras=cameras, raster_settings=raster_settings)
+        # ----change  ------
+
         self.renderer = MeshRenderer(
             rasterize_fov=fov, znear=opt.z_near, zfar=opt.z_far, rasterize_size=int(2 * opt.center)
         )
@@ -170,19 +202,15 @@ class FaceReconModel(BaseModel):
 
     def forward(self):
         output_coeff = self.net_recon(self.input_img)
-        # print("grad", output_coeff.requires_grad)
-        # print(self.net_recon)
-        # print("output_coeff:", output_coeff.shape)
+        self.facemodel.to(self.device)
+        self.mesh_rasterizer.to(self.device)
         self.pred_vertex, self.pred_tex, self.pred_color, self.pred_lm = self.facemodel.compute_for_render(
             output_coeff
         )
-        # print("pred_vertex:", self.pred_vertex.shape)
-        # print("pred_tex:", self.pred_tex.shape)
-        # print("pred_color:", self.pred_color.shape)
-        # print("pred_lm:", self.pred_lm.shape)
         self.pred_mask, _, self.pred_face = self.renderer(
-            self.pred_vertex, self.facemodel.face_buf, feat=self.pred_color
+            self.mesh_rasterizer, self.pred_vertex, self.facemodel.face_buf, feat=self.pred_color
         )
+        self.pred_coeffs_dict = self.facemodel.split_coeff(output_coeff)
 
         self.pred_coeffs_dict = self.facemodel.split_coeff(output_coeff)
 
@@ -200,8 +228,8 @@ class FaceReconModel(BaseModel):
 
         face_mask = self.pred_mask
         if self.opt.use_crop_face:
-            face_mask, _, _ = self.renderer(self.pred_vertex, self.facemodel.front_face_buf)
 
+            face_mask, _, _ = self.renderer(self.mesh_rasterizer, self.pred_vertex, self.facemodel.front_face_buf)
         face_mask = face_mask.detach()
         self.loss_color = self.opt.w_color * self.compute_color_loss(
             self.pred_face, self.input_img, self.atten_mask * face_mask
