@@ -304,11 +304,12 @@ class VideoDataset(BaseDataset):
         landmark_tensor = torch.from_numpy(landmark).float()
         M_tensor = torch.from_numpy(M).float()
 
-        brightness, contrast, saturation, hue = get_params()
-        img_tensor = TF.adjust_brightness(img_tensor, brightness)
-        img_tensor = TF.adjust_contrast(img_tensor, contrast)
-        img_tensor = TF.adjust_saturation(img_tensor, saturation)
-        img_tensor = TF.adjust_hue(img_tensor, hue)
+        if self.opt.isTrain:
+            brightness, contrast, saturation, hue = get_params()
+            img_tensor = TF.adjust_brightness(img_tensor, brightness)
+            img_tensor = TF.adjust_contrast(img_tensor, contrast)
+            img_tensor = TF.adjust_saturation(img_tensor, saturation)
+            img_tensor = TF.adjust_hue(img_tensor, hue)
 
         return {
             "imgs": img_tensor,
