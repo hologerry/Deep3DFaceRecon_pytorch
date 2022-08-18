@@ -290,7 +290,7 @@ class ParametricFaceModel:
         face_norm_roted = face_norm @ rotation
         face_color = self.compute_color(face_texture, face_norm_roted, coef_dict["gamma"])
 
-        return face_vertex, face_texture, face_color, landmark
+        return face_proj, face_vertex, face_texture, face_color, landmark
 
     def compute_for_landmark(self, coeffs):
         """

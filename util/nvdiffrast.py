@@ -1,5 +1,5 @@
 """This script is the differentiable renderer for Deep3DFaceRecon_pytorch
-    Attention, antialiasing step is missing in current version.
+    Attention, anti-aliasing step is missing in current version.
 """
 from typing import List
 
@@ -120,6 +120,7 @@ class MeshRenderer(nn.Module):
 
         # render depth
         depth = depth.permute(0, 3, 1, 2)
+        idv = rast_out[..., 3]
         mask = (rast_out > 0).float().unsqueeze(1)
         depth = mask * depth
 
@@ -130,4 +131,4 @@ class MeshRenderer(nn.Module):
             image = image.squeeze(-2).permute(0, 3, 1, 2)
             image = mask * image
 
-        return mask, depth, image
+        return mask, depth, image, idv
