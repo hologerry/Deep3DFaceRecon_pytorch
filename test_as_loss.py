@@ -2,18 +2,23 @@ import os
 
 import cv2
 import dlib
+import matplotlib
 import numpy as np
 import torch
 import trimesh
 
-from PIL import Image
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import numpy as np
+
 from torchvision.transforms.functional import resize
 from torchvision.utils import save_image
+from tqdm import tqdm
 
 from models.bfm import ParametricFaceModel
 from models.networks import ReconNetWrapper
 from util.load_mats import load_lm3d
-from util.nvdiffrast import MeshRenderer
 
 
 def crop_square(img, size=256, interpolation=cv2.INTER_AREA):
@@ -73,7 +78,7 @@ def extract_5p(lm, dtype="int32"):
 def save_lmks_to_file(lmks, file):
     with open(file, "w") as f:
         for i in range(len(lmks)):
-            f.write(str(lmks[i][0]) + " " + str(lmks[i][0]))  # x,y coordiantes
+            f.write(str(lmks[i][0]) + " " + str(lmks[i][0]))  # x,y coordinates
 
             if i != len(lmks) - 1:
                 f.write("\n")
@@ -214,6 +219,30 @@ def save_mesh(face_model, pred_vertex, pred_color, file_name):
     mesh.export(file_name)
 
 
+def visualize_link(img, annotation, output_path, line_type="-*"):
+    """
+    visualize the linked facial landmarks according to their physical locations
+    """
+    plt.figure()
+    plt.imshow(img)  # show face image
+    x = np.array(annotation[:, 0])
+    y = 223 - np.array(annotation[:, 1])
+    star = line_type  # plot style, such as '-*'
+
+    plt.plot(x[0:17], y[0:17], star)  # face contour
+    plt.plot(x[17:22], y[17:22], star)  # left eyebrow
+    plt.plot(x[22:27], y[22:27], star)  # right eyebrow
+    plt.plot(x[27:31], y[27:31], star)  # nose
+    plt.plot(x[31:36], y[31:36], star)  # nose
+    plt.plot(np.hstack([x[36:42], x[36]]), np.hstack([y[36:42], y[36]]), star)  # left eye
+    plt.plot(np.hstack([x[42:48], x[42]]), np.hstack([y[42:48], y[42]]), star)  # right eye
+    plt.plot(np.hstack([x[48:60], x[48]]), np.hstack([y[48:60], y[48]]), star)  # mouth
+    plt.plot(np.hstack([x[60:68], x[60]]), np.hstack([y[60:68], y[60]]), star)  # mouth
+    plt.axis("off")
+    plt.savefig(output_path, bbox_inches="tight", pad_inches=0.0)
+    plt.close()
+
+
 def main(net_recon, face_model, renderer):
 
     shape_predictor_path = "shape_predictor/shape_predictor_68_face_landmarks.dat"
@@ -291,17 +320,7 @@ def main(net_recon, face_model, renderer):
     save_image(aligned_images_tensor, "vis_test/aligned_img_tensor.png")
 
 
-if __name__ == "__main__":
-
-    focal = 1015.0
-    center = 112.0
-    camera_d = 10.0
-    z_near = 5.0
-    z_far = 15.0
-
-    checkpoint = torch.load("checkpoints/face_recon_feat0.2_augment/epoch_20.pth", map_location="cpu")
-    print("checkpoint keys", checkpoint.keys())
-
+def test_pretrained(checkpoint):
     net_recon = ReconNetWrapper(net_recon="resnet50", use_last_fc=False)
     net_recon.load_state_dict(checkpoint["net_recon"])
     net_recon.cuda()
@@ -316,6 +335,98 @@ if __name__ == "__main__":
         default_name="BFM_model_front.mat",
         device="cuda",
     )
-    fov = 2 * np.arctan(center / focal) * 180.0 / np.pi
-    renderer = MeshRenderer(rasterize_fov=fov, znear=z_near, zfar=z_far, rasterize_size=int(2 * center)).cuda()
-    main(net_recon, face_model, renderer)
+
+    image_folder = "val_case_video/image"
+    vis_output_folder = "val_case_video/vis_pretrained"
+    os.makedirs(vis_output_folder, exist_ok=True)
+    images = sorted(os.listdir(image_folder))
+    for image_name in tqdm(images):
+        image_path = os.path.join(image_folder, image_name)
+        image = cv2.imread(image_path)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image = crop_square(image, 224)
+        image_tensor = torch.from_numpy(image.transpose((2, 0, 1))).float().unsqueeze(0).cuda() / 255.0
+
+        output_coeff = net_recon(image_tensor)
+        pred_lm = face_model.compute_for_landmark(output_coeff)
+        lmk = pred_lm[0].detach().cpu().numpy()
+        visualize_link(image, lmk, os.path.join(vis_output_folder, image_name))
+    output = "val_case_video/vis_pretrained.mp4"
+    os.system(
+        f"ffmpeg -hide_banner -loglevel error -framerate 30 -pattern_type glob -i '{vis_output_folder}/*.png' -c:v libx264 -pix_fmt yuv420p -vf 'crop=trunc(iw/2)*2:trunc(ih/2)*2' -y {output}"
+    )
+    os.system(f"rm -rf {vis_output_folder}")
+
+
+def test_finetune(checkpoint):
+    net_recon = ReconNetWrapper(net_recon="resnet50", use_last_fc=False)
+    net_recon.load_state_dict(checkpoint["net_recon"])
+    net_recon.cuda()
+    net_recon.eval()
+
+    face_model = ParametricFaceModel(
+        bfm_folder="BFM",
+        camera_distance=camera_d,
+        focal=focal,
+        center=center,
+        is_train=False,
+        default_name="BFM_model_front.mat",
+        device="cuda",
+    )
+
+    image_folder = "val_case_video/image"
+    vis_output_folder = "val_case_video/vis_finetune_12ep"
+    os.makedirs(vis_output_folder, exist_ok=True)
+    images = sorted(os.listdir(image_folder))
+
+    for image_name in tqdm(images):
+        image_path = os.path.join(image_folder, image_name)
+        image = cv2.imread(image_path)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image = crop_square(image, 224)
+        image_tensor = torch.from_numpy(image.transpose((2, 0, 1))).float().unsqueeze(0).cuda() / 255.0
+
+        output_coeff = net_recon(image_tensor)
+        pred_lm = face_model.compute_for_landmark(output_coeff)
+        lmk = pred_lm[0].detach().cpu().numpy()
+        visualize_link(image, lmk, os.path.join(vis_output_folder, image_name))
+    output = "val_case_video/vis_finetune_12ep.mp4"
+    os.system(
+        f"ffmpeg -hide_banner -loglevel error -framerate 30 -pattern_type glob -i '{vis_output_folder}/*.png' -c:v libx264 -pix_fmt yuv420p -vf 'crop=trunc(iw/2)*2:trunc(ih/2)*2' -y {output}"
+    )
+    os.system(f"rm -rf {vis_output_folder}")
+
+
+if __name__ == "__main__":
+
+    focal = 1015.0
+    center = 112.0
+    camera_d = 10.0
+    z_near = 5.0
+    z_far = 15.0
+
+    # checkpoint = torch.load("checkpoints/face_recon_feat0.2_augment/epoch_20.pth", map_location="cpu")
+    # print("checkpoint keys", checkpoint.keys())
+
+    # net_recon = ReconNetWrapper(net_recon="resnet50", use_last_fc=False)
+    # net_recon.load_state_dict(checkpoint["net_recon"])
+    # net_recon.cuda()
+    # net_recon.eval()
+
+    # face_model = ParametricFaceModel(
+    #     bfm_folder="BFM",
+    #     camera_distance=camera_d,
+    #     focal=focal,
+    #     center=center,
+    #     is_train=False,
+    #     default_name="BFM_model_front.mat",
+    #     device="cuda",
+    # )
+    # fov = 2 * np.arctan(center / focal) * 180.0 / np.pi
+    # renderer = MeshRenderer(rasterize_fov=fov, znear=z_near, zfar=z_far, rasterize_size=int(2 * center)).cuda()
+    # main(net_recon, face_model, renderer)
+    pretrain_checkpoint = torch.load("checkpoints/face_recon_feat0.2_augment/epoch_20.pth", map_location="cpu")
+    finetune_checkpoint = torch.load("checkpoints/talking_head_recon_8gpu_80ep/epoch_12.pth", map_location="cpu")
+
+    # test_pretrained(pretrain_checkpoint)
+    test_finetune(finetune_checkpoint)
