@@ -173,7 +173,7 @@ class FaceReconModel(BaseModel):
             self.net_recog = networks.define_net_recog(net_recog=opt.net_recog, pretrained_path=opt.net_recog_path)
             # loss func name: (compute_%s_loss) % loss_name
             self.compute_feat_loss = perceptual_loss
-            self.comupte_color_loss = photo_loss
+            self.compute_color_loss = photo_loss
             self.compute_lm_loss = landmark_loss
             self.compute_reg_loss = reg_loss
             self.compute_reflc_loss = reflectance_loss
@@ -223,7 +223,7 @@ class FaceReconModel(BaseModel):
             face_mask, _, _ = self.renderer(self.mesh_rasterizer, self.pred_vertex, self.facemodel.front_face_buf)
 
         face_mask = face_mask.detach()
-        self.loss_color = self.opt.w_color * self.comupte_color_loss(
+        self.loss_color = self.opt.w_color * self.compute_color_loss(
             self.pred_face, self.input_img, self.atten_mask * face_mask
         )
 

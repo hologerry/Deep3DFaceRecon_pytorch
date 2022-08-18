@@ -291,3 +291,24 @@ class ParametricFaceModel:
         face_color = self.compute_color(face_texture, face_norm_roted, coef_dict["gamma"])
 
         return face_vertex, face_texture, face_color, landmark
+
+    def compute_for_landmark(self, coeffs):
+        """
+        Return:
+            face_vertex     -- torch.tensor, size (B, N, 3), in camera coordinate
+            face_color      -- torch.tensor, size (B, N, 3), in RGB order
+            landmark        -- torch.tensor, size (B, 68, 2), y direction is opposite to v direction
+        Parameters:
+            coeffs          -- torch.tensor, size (B, 257)
+        """
+        coef_dict = self.split_coeff(coeffs)
+        face_shape = self.compute_shape(coef_dict["id"], coef_dict["exp"])
+        rotation = self.compute_rotation(coef_dict["angle"])
+
+        face_shape_transformed = self.transform(face_shape, rotation, coef_dict["trans"])
+        face_vertex = self.to_camera(face_shape_transformed)
+
+        face_proj = self.to_image(face_vertex)
+        landmark = self.get_landmarks(face_proj)
+
+        return landmark
