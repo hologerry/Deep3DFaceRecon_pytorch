@@ -58,7 +58,7 @@ class TrainOptions(BaseOptions):
         parser.add_argument(
             "--vfhq_video_names_json",
             type=str,
-            default="data/VFHQ_datasets_extracted/VFHQ-Train/extracted_cropped_face_results_file_names.json",
+            default="data/VFHQ_datasets_extracted/VFHQ-Train/landmarks_json_256_non_empty.json",
             help="json file of video names",
         )
         # parser.add_argument("--split", type=str, default="train", help="train/val/test")
@@ -75,7 +75,7 @@ class TrainOptions(BaseOptions):
         parser.add_argument(
             "--vfhq_video_names_json_val",
             type=str,
-            default="data/VFHQ_datasets_extracted/VFHQ-Test/extracted_cropped_face_results_file_names.json",
+            default="data/VFHQ_datasets_extracted/VFHQ-Test/landmarks_json_256_non_empty.json",
             help="json file of video names",
         )
         parser.add_argument(
