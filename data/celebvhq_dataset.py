@@ -262,6 +262,10 @@ class CelebvhqDataset(BaseDataset):
             self.landmark_dir = os.path.join(opt.data_root, opt.celebvhq_landmark_dir_val)
 
         self.videos = json.load(open(self.vide_names_json))["videos"]
+        if self.opt.isTrain:
+            self.videos = self.videos[:-500]
+        else:
+            self.videos = self.videos[-500:]
         self.name = "video_dataset"
 
     def __len__(self):
