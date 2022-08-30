@@ -282,14 +282,32 @@ class VideoDataset(BaseDataset):
         # while str(frame_idx) not in landmark_dict:
         #     frame_idx = random.randint(0, frame_count - 1)
 
-        frame_ids = landmark_dict.keys()
-        frame_ids = [int(x) for x in frame_ids]
-        frame_idx = random.choice(frame_ids)
+        frame_ids_all = landmark_dict.keys()
+        frame_ids_all = [int(x) for x in frame_ids_all]
+        frame_idx = random.choice(frame_ids_all)
         landmark = landmark_dict[str(frame_idx)]
 
         video = cv2.VideoCapture(video_file)
         video.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
         res, frame = video.read()
+
+        try_num = 1
+
+        while try_num < 5 and (not res or frame is None):
+            try_num += 1
+            frame_idx = random.choice(frame_ids_all)
+            landmark = landmark_dict[str(frame_idx)]
+
+            video.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+            res, frame = video.read()
+
+        if not res or frame is None:
+            pre_idx = idx - 1
+            nxt_idx = idx + 1
+            if pre_idx >= 0:
+                return self.__getitem__(pre_idx)
+            else:
+                return self.__getitem__(nxt_idx)
 
         frame = crop_square(frame, 224)
         landmark = np.array(landmark) / 255.0 * 223.0
