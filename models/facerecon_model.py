@@ -1,17 +1,10 @@
+"""This script defines the face reconstruction model for Deep3DFaceRecon_pytorch
+"""
+
 import numpy as np
 import torch
 import trimesh
 
-# ------pytorch3d ----
-from pytorch3d.renderer import (
-    DirectionalLights,
-    FoVPerspectiveCameras,
-    MeshRasterizer,
-    RasterizationSettings,
-    SoftPhongShader,
-    TexturesUV,
-    look_at_view_transform,
-)
 from scipy.io import savemat
 
 from util import util
@@ -28,9 +21,6 @@ from .losses import (
     reflectance_loss,
     reg_loss,
 )
-
-
-# ------pytorch3d ----
 
 
 class FaceReconModel(BaseModel):
@@ -117,8 +107,10 @@ class FaceReconModel(BaseModel):
 
     def __init__(self, opt):
         """Initialize this model class.
+
         Parameters:
             opt -- training/test options
+
         A few things can be done here.
         - (required) call the initialization function of BaseModel
         - define loss function, visualization images, model names, and optimizers
@@ -140,29 +132,9 @@ class FaceReconModel(BaseModel):
             center=opt.center,
             is_train=self.isTrain,
             default_name=opt.bfm_model,
-            device="cuda",
         )
-
+        self.facemodel.to(self.device)
         fov = 2 * np.arctan(opt.center / opt.focal) * 180 / np.pi
-
-        # ----change  ------
-        # rasterize
-        cameras = FoVPerspectiveCameras(
-            fov=fov,
-            znear=opt.z_near,
-            zfar=opt.z_far,
-        )
-
-        raster_settings = RasterizationSettings(
-            image_size=int(2 * opt.center),
-            blur_radius=0.0,
-            faces_per_pixel=1,
-            bin_size=-1,
-        )
-
-        self.mesh_rasterizer = MeshRasterizer(cameras=cameras, raster_settings=raster_settings)
-        # ----change  ------
-
         self.renderer = MeshRenderer(
             rasterize_fov=fov, znear=opt.z_near, zfar=opt.z_far, rasterize_size=int(2 * opt.center)
         )
@@ -185,6 +157,7 @@ class FaceReconModel(BaseModel):
 
     def set_input(self, input):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
+
         Parameters:
             input: a dictionary that contains the data itself and its metadata information.
         """
@@ -196,14 +169,13 @@ class FaceReconModel(BaseModel):
 
     def forward(self):
         output_coeff = self.net_recon(self.input_img)
-        # self.facemodel.to(self.device)
-        self.mesh_rasterizer.to(self.device)
         self.pred_vertex, self.pred_tex, self.pred_color, self.pred_lm = self.facemodel.compute_for_render(
             output_coeff
         )
         self.pred_mask, _, self.pred_face = self.renderer(
-            self.mesh_rasterizer, self.pred_vertex, self.facemodel.face_buf, feat=self.pred_color
+            self.pred_vertex, self.facemodel.face_buf, feat=self.pred_color
         )
+
         self.pred_coeffs_dict = self.facemodel.split_coeff(output_coeff)
 
     def compute_losses(self):
@@ -220,7 +192,7 @@ class FaceReconModel(BaseModel):
 
         face_mask = self.pred_mask
         if self.opt.use_crop_face:
-            face_mask, _, _ = self.renderer(self.mesh_rasterizer, self.pred_vertex, self.facemodel.front_face_buf)
+            face_mask, _, _ = self.renderer(self.pred_vertex, self.facemodel.front_face_buf)
 
         face_mask = face_mask.detach()
         self.loss_color = self.opt.w_color * self.compute_color_loss(
@@ -277,7 +249,10 @@ class FaceReconModel(BaseModel):
         recon_color = recon_color.cpu().numpy()[0]
         tri = self.facemodel.face_buf.cpu().numpy()
         mesh = trimesh.Trimesh(
-            vertices=recon_shape, faces=tri, vertex_colors=np.clip(255.0 * recon_color, 0, 255).astype(np.uint8)
+            vertices=recon_shape,
+            faces=tri,
+            vertex_colors=np.clip(255.0 * recon_color, 0, 255).astype(np.uint8),
+            process=False,
         )
         mesh.export(name)
 

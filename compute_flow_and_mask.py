@@ -1,3 +1,5 @@
+import copy
+
 import cv2
 import matplotlib
 import numpy as np
@@ -11,8 +13,18 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import torch.nn.functional as F
 
+# from pytorch3d.renderer import (
+#     DirectionalLights,
+#     FoVPerspectiveCameras,
+#     MeshRasterizer,
+#     RasterizationSettings,
+#     SoftPhongShader,
+#     TexturesUV,
+#     look_at_view_transform,
+# )
 from torchvision.utils import save_image
 
+# from util.nvdiffrast import MeshRenderer as MeshRenderer3D
 from util.nvdiffrast_raw import MeshRenderer
 
 
@@ -128,7 +140,25 @@ def main():
         device="cuda",
     )
 
+    # cameras = FoVPerspectiveCameras(
+    #     fov=fov,
+    #     znear=z_near,
+    #     zfar=z_far,
+    #     device="cuda",
+    # )
+
+    # raster_settings = RasterizationSettings(
+    #     image_size=int(2 * center),
+    #     blur_radius=0.0,
+    #     faces_per_pixel=1,
+    #     bin_size=-1,
+    # )
+
+    # mesh_rasterizer = MeshRasterizer(cameras=cameras, raster_settings=raster_settings)
+    # mesh_rasterizer.to("cuda")
+
     renderer = MeshRenderer(rasterize_fov=fov, znear=z_near, zfar=z_far, rasterize_size=int(2 * center))
+    # renderer_3d = MeshRenderer3D(rasterize_fov=fov, znear=z_near, zfar=z_far, rasterize_size=int(2 * center)).cuda()
 
     image_folder = "val_case_video/image"
     test_img_path_1 = "val_case_video/image/000001.png"
@@ -144,7 +174,8 @@ def main():
 
     coeff_1 = net_recon(image_1)
     coeff_2 = net_recon(image_2)
-    x1, x2, y1, y2 = 0, 223, 0, 223
+    # front_coeff_2 = copy.deepcopy(coeff_2)
+    # front_coeff_2[:, :, ]
     pre_face_project, pre_face_vertex, _, _, pre_lmk = face_model.compute_for_render(coeff_1)
     cur_face_project, cur_face_vertex, _, _, cur_lmk = face_model.compute_for_render(coeff_2)
     visualize_link(image_np_2, cur_lmk.detach().squeeze().cpu().numpy(), "vis_flow/img2_lmk.png")
@@ -173,6 +204,24 @@ def main():
     flow_np = flow.squeeze(0).permute(1, 2, 0).cpu().numpy()
     flow_img = flow_to_image(flow_np, convert_to_bgr=True)
     cv2.imwrite("vis_flow/flow_img.png", flow_img)
+
+    # pred_mask_3d, depth_3d, flow_3d, idv_3d = renderer_3d(mesh_rasterizer, cur_face_vertex, face_model.face_buf, feat=face_project_pre_to_cur)
+
+    # print("pred_mask_3d shape: ", pred_mask_3d.shape)
+    # print("depth_3d shape: ", depth_3d.shape)
+    # print("flow_3d shape: ", flow_3d.shape)
+    # print("idv_3d shape: ", idv_3d.shape)
+
+    # warped_image_1 = warp(image_1, flow_3d)
+    # save_image(pred_mask_3d, "vis_flow/pred_mask_3d.png")
+    # save_image(depth_3d, "vis_flow/depth_3d.png")
+    # save_image(idv_3d, "vis_flow/idv_3d.png")
+    # save_image(warped_image_1, "vis_flow/warped_image_1.png")
+    # save_image(image_1, "vis_flow/image_1.png")
+    # save_image(image_2, "vis_flow/image_2.png")
+    # flow_np = flow_3d.squeeze(0).permute(1, 2, 0).cpu().numpy()
+    # flow_img = flow_to_image(flow_np, convert_to_bgr=True)
+    # cv2.imwrite("vis_flow/flow_img.png", flow_img)
 
 
 if __name__ == "__main__":

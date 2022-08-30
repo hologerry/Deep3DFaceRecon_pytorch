@@ -34,7 +34,6 @@ class ParametricFaceModel:
         center=112.0,
         is_train=True,
         default_name="BFM_model_front.mat",
-        device="cpu",
     ):
 
         if not os.path.isfile(os.path.join(bfm_folder, default_name)):
@@ -71,11 +70,10 @@ class ParametricFaceModel:
             self.mean_shape = mean_shape.reshape([-1, 1])
 
         self.persc_proj = perspective_projection(focal, center)
+        self.device = "cuda"
         self.camera_distance = camera_distance
         self.SH = SH()
         self.init_lit = init_lit.reshape([1, 1, -1]).astype(np.float32)
-        self.device = device
-        self.to(device)
 
     def to(self, device):
         self.device = device
@@ -290,25 +288,4 @@ class ParametricFaceModel:
         face_norm_roted = face_norm @ rotation
         face_color = self.compute_color(face_texture, face_norm_roted, coef_dict["gamma"])
 
-        return face_proj, face_vertex, face_texture, face_color, landmark
-
-    def compute_for_landmark(self, coeffs):
-        """
-        Return:
-            face_vertex     -- torch.tensor, size (B, N, 3), in camera coordinate
-            face_color      -- torch.tensor, size (B, N, 3), in RGB order
-            landmark        -- torch.tensor, size (B, 68, 2), y direction is opposite to v direction
-        Parameters:
-            coeffs          -- torch.tensor, size (B, 257)
-        """
-        coef_dict = self.split_coeff(coeffs)
-        face_shape = self.compute_shape(coef_dict["id"], coef_dict["exp"])
-        rotation = self.compute_rotation(coef_dict["angle"])
-
-        face_shape_transformed = self.transform(face_shape, rotation, coef_dict["trans"])
-        face_vertex = self.to_camera(face_shape_transformed)
-
-        face_proj = self.to_image(face_vertex)
-        landmark = self.get_landmarks(face_proj)
-
-        return landmark
+        return face_vertex, face_texture, face_color, landmark
