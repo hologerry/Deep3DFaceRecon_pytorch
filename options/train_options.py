@@ -24,7 +24,7 @@ class TrainOptions(BaseOptions):
         parser.add_argument(
             "--video_names_json",
             type=str,
-            default="data/TalkingHead-1KH_datasets/landmark/train_good_video_landmarks_json_256_non_empty.json",
+            default="data/TalkingHead-1KH_datasets/landmark/train_video_landmarks_json_256_non_empty.json",
             help="json file of video names",
         )
         # parser.add_argument("--split", type=str, default="train", help="train/val/test")
@@ -35,7 +35,7 @@ class TrainOptions(BaseOptions):
         )
         parser.add_argument(
             "--landmark_dir",
-            default="data/TalkingHead-1KH_datasets/landmark/train_good_video_landmarks_json_256",
+            default="data/TalkingHead-1KH_datasets/landmark/train_video_landmarks_json_256",
             help="path to output landmarks",
         )
         parser.add_argument(
@@ -52,6 +52,74 @@ class TrainOptions(BaseOptions):
         parser.add_argument(
             "--landmark_dir_val",
             default="data/TalkingHead-1KH_datasets/landmark/val_video_landmarks_json_256",
+            help="path to output landmarks",
+        )
+
+        parser.add_argument(
+            "--vfhq_video_names_json",
+            type=str,
+            default="data/VFHQ_datasets_extracted/VFHQ-Train/extracted_cropped_face_results_file_names.json",
+            help="json file of video names",
+        )
+        # parser.add_argument("--split", type=str, default="train", help="train/val/test")
+        parser.add_argument(
+            "--vfhq_video_dir",
+            default="data/VFHQ_datasets_extracted/VFHQ-Train/extracted_cropped_face_results_256",
+            help="videos",
+        )
+        parser.add_argument(
+            "--vfhq_landmark_dir",
+            default="data/VFHQ_datasets_extracted/VFHQ-Train/landmarks_json_256",
+            help="path to output landmarks",
+        )
+        parser.add_argument(
+            "--vfhq_video_names_json_val",
+            type=str,
+            default="data/VFHQ_datasets_extracted/VFHQ-Test/extracted_cropped_face_results_file_names.json",
+            help="json file of video names",
+        )
+        parser.add_argument(
+            "--vfhq_video_dir_val",
+            default="data/VFHQ_datasets_extracted/VFHQ-Test/extracted_cropped_face_results",
+            help="videos",
+        )
+        parser.add_argument(
+            "--vfhq_landmark_dir_val",
+            default="data/VFHQ_datasets_extracted/VFHQ-Test/landmarks_json_256",
+            help="path to output landmarks",
+        )
+
+        parser.add_argument(
+            "--celebvhq_video_names_json",
+            type=str,
+            default="data/CelebV-HQ_downloaded/processed_35666_train_videos_names.json",
+            help="json file of video names",
+        )
+        # parser.add_argument("--split", type=str, default="train", help="train/val/test")
+        parser.add_argument(
+            "--celebvhq_video_dir",
+            default="data/CelebV-HQ_downloaded/processed_35666",
+            help="videos",
+        )
+        parser.add_argument(
+            "--celebvhq_landmark_dir",
+            default="data/CelebV-HQ_downloaded/landmarks_json_256",
+            help="path to output landmarks",
+        )
+        parser.add_argument(
+            "--celebvhq_video_names_json_val",
+            type=str,
+            default="data/CelebV-HQ_downloaded/processed_35666_val_videos_names.json",
+            help="json file of video names",
+        )
+        parser.add_argument(
+            "--celebvhq_video_dir_val",
+            default="data/CelebV-HQ_downloaded/processed_35666",
+            help="videos",
+        )
+        parser.add_argument(
+            "--celebvhq_landmark_dir_val",
+            default="data/CelebV-HQ_downloaded/landmarks_json_256",
             help="path to output landmarks",
         )
         parser.add_argument("--batch_size", type=int, default=32)
