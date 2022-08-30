@@ -64,7 +64,7 @@ class TrainOptions(BaseOptions):
         # parser.add_argument("--split", type=str, default="train", help="train/val/test")
         parser.add_argument(
             "--vfhq_video_dir",
-            default="data/VFHQ_datasets_extracted/VFHQ-Train/extracted_cropped_face_results_256",
+            default="data/VFHQ_datasets_extracted/VFHQ-Train/extracted_cropped_face_results",
             help="videos",
         )
         parser.add_argument(
