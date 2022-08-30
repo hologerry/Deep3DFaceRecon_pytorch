@@ -24,7 +24,7 @@ class TrainOptions(BaseOptions):
         parser.add_argument(
             "--video_names_json",
             type=str,
-            default="data/TalkingHead-1KH_datasets/landmark/train_video_landmarks_json_256_non_empty_valid.json",
+            default="data/TalkingHead-1KH_datasets/landmark/train_video_landmarks_json_256_non_empty.json",
             help="json file of video names",
         )
         # parser.add_argument("--split", type=str, default="train", help="train/val/test")
@@ -92,7 +92,7 @@ class TrainOptions(BaseOptions):
         parser.add_argument(
             "--celebvhq_video_names_json",
             type=str,
-            default="data/CelebV-HQ_downloaded/landmarks_json_256_non_empty_valid.json",
+            default="data/CelebV-HQ_downloaded/landmarks_json_256_non_empty.json",
             help="json file of video names",
         )
         # parser.add_argument("--split", type=str, default="train", help="train/val/test")
@@ -109,7 +109,7 @@ class TrainOptions(BaseOptions):
         parser.add_argument(
             "--celebvhq_video_names_json_val",
             type=str,
-            default="data/CelebV-HQ_downloaded/landmarks_json_256_non_empty_valid.json",
+            default="data/CelebV-HQ_downloaded/landmarks_json_256_non_empty.json",
             help="json file of video names",
         )
         parser.add_argument(
