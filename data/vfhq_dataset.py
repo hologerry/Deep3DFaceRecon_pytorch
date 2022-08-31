@@ -28,9 +28,8 @@ def crop_square(img, size=256, interpolation=cv2.INTER_AREA):
     return resized
 
 
-def read_image(img_path, size=256):
+def read_image_bgr(img_path, size=256):
     img = cv2.imread(img_path)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     img = crop_square(img, size)
     return img
 
@@ -269,7 +268,7 @@ class VFHQDataset(BaseDataset):
         frame_name = f"{frame_idx:08d}.png"
         frame_path = os.path.join(self.video_dir, video_name, clip_name, frame_name)
 
-        frame = read_image(frame_path, 224)
+        frame = read_image_bgr(frame_path, 224)
 
         landmark = landmark_dict[str(frame_idx)]
         landmark = np.array(landmark) / 255.0 * 223.0
