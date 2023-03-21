@@ -7,7 +7,9 @@ import torch
 import torch.utils.data as data
 import torchvision.transforms.functional as TF
 
-from data.data_utils import read_image
+from torchvision.io import read_video
+
+from data.data_utils import crop_square_video_tensor, read_image
 
 
 class VFHQDataset(data.Dataset):
@@ -20,13 +22,11 @@ class VFHQDataset(data.Dataset):
         self.data_type = data_type
 
         if split == "train":
-            self.video_dir = "../data/TalkingHead-1KH_datasets/train/cropped_clips_images_256"
-            self.files_names_json = "../data/TalkingHead-1KH_datasets/train/cropped_clips_videos_images.json"
-            self.coeffs_dir = "../data/TalkingHead-1KH_datasets/train/cropped_clips_coeffs"
+            self.video_dir = "../data/TalkingHead-1KH_datasets/train/cropped_clips_256"
+            self.files_names_json = "../data/TalkingHead-1KH_datasets/train/cropped_clips_256_names.json"
         else:
-            self.video_dir = "../data/TalkingHead-1KH_datasets/val/cropped_clips_images"
-            self.files_names_json = "../data/TalkingHead-1KH_datasets/val/cropped_clips_videos_images.json"
-            self.coeffs_dir = "../data/TalkingHead-1KH_datasets/val/cropped_clips_coeffs"
+            self.video_dir = "../data/TalkingHead-1KH_datasets/val/cropped_clips_256"
+            self.files_names_json = "../data/TalkingHead-1KH_datasets/val/cropped_clips_256_names.json"
 
         with open(self.files_names_json, "r") as f:
             self.data_dict = json.load(f)
@@ -39,16 +39,17 @@ class VFHQDataset(data.Dataset):
         return len(self.videos)
 
     def __getitem__(self, index):
-        video_name = self.videos[index]
-        frame_names = self.data_dict[video_name]
+        video_fn = self.videos[index]
+        video_name = video_fn.replace(".mp4", "")
+        video_path = os.path.join(self.video_dir, video_fn)
 
-        T = len(frame_names)
+        video, _, meta = read_video(video_path, pts_unit="sec")
 
-        frame_paths = [os.path.join(self.video_dir, video_name, frame_name) for frame_name in frame_names]
-        frame_paths = [frame_path.strip() for frame_path in frame_paths]
-        frames = [read_image(frame_path, self.size) for frame_path in frame_paths]
-        video = torch.stack(frames, dim=0)
+        video = video.float() / 255.0
+        video = video.permute(0, 3, 1, 2)
 
+        # fps = meta["video_fps"]
+        video = crop_square_video_tensor(video, size=224)
         if "norm" in self.data_type:
             video = video * 2.0 - 1.0
 

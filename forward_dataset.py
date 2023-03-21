@@ -5,6 +5,7 @@ from argparse import ArgumentParser
 import numpy as np
 import torch
 
+from torchvision.utils import save_image
 from tqdm import tqdm
 
 from data.talkinghead_dataset import get_dataloader
@@ -52,9 +53,9 @@ def main(args):
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--job_idx", type=int, default=0)
-    parser.add_argument("--job_num", type=int, default=4)
+    parser.add_argument("--job_num", type=int, default=1)
     parser.add_argument("--gpu_idx", type=int, default=0)
-    parser.add_argument("--gpu_num", type=int, default=2)
+    parser.add_argument("--gpu_num", type=int, default=1)
     parser.add_argument("--part_idx", type=int, default=0)
     parser.add_argument("--part_num", type=int, default=1)
     parser.add_argument("--sub_batch_size", type=int, default=32)
@@ -64,9 +65,7 @@ if __name__ == "__main__":
         default="train",
         help="path to output landmarks",
     )
-    parser.add_argument(
-        "--output_coeffs_dir", default="../data/TalkingHead-1KH_datasets/coeffs", help="path to output coeffs"
-    )
+    parser.add_argument("--output_coeffs_dir", help="path to output coeffs")
 
     args = parser.parse_args()
 
@@ -78,4 +77,7 @@ if __name__ == "__main__":
     print(
         f"GPU job {args.job_idx}/{args.job_num}, gpu {args.gpu_idx}/{args.gpu_num}, part {args.part_idx}/{args.part_num}"
     )
+    args.output_coeffs_dir = f"../data/TalkingHead-1KH_datasets/{args.split}_face_coeffs/"
+    os.makedirs(args.output_coeffs_dir, exist_ok=True)
+
     main(args)

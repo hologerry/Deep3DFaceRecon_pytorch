@@ -71,8 +71,10 @@ class FaceShapeRecon(nn.Module):
     def forward(self, input, normalize=False):
         if normalize:
             input = (input + 1.0) / 2.0
-        input_resize = TF.resize(input, (224, 224))
-        input_coeff = self.net_recon(input_resize)
+        if input.shape[2] != 224 or input.shape[3] != 224:
+            input = TF.resize(input, (224, 224))
+            print("Warning: input size is not 224x224, resize to 224x224")
+        input_coeff = self.net_recon(input)
         preds_dict = self.split_coeff(input_coeff)
         landmark = self.face_model.compute_landmark(preds_dict)
         preds_dict.update({"landmark": landmark})
