@@ -26,7 +26,7 @@ def main(args):
     # face_shape_recon = FaceShapeRecon(checkpoint_path="./checkpoints/talking_head_all_recon_8gpu_80ep/epoch_24.pth")
     face_shape_recon = FaceShapeRecon(checkpoint_path="./checkpoints/vfhq_8gpu_100ep/epoch_100.pth")
     data_loader = get_dataloader(
-        split=args.split, size=256, data_type="two", part_idx=args.part_idx, part_num=args.part_num
+        split=args.split, size=224, data_type="two", part_idx=args.part_idx, part_num=args.part_num
     )
 
     for data_batch in tqdm(data_loader, total=len(data_loader), desc=f"Forwarding {args.part_idx}/{args.part_num}"):

@@ -316,7 +316,7 @@ def read_image(image_path, size=256, to_cuda=False):
     return img
 
 
-class VFHQInferDataset(BaseDataset):
+class VFHQInferDataset(data.Dataset):
     """
     Dataset of videos, each video can be represented as:
       - '.mp4' or '.gif'
@@ -368,11 +368,12 @@ class VFHQInferDataset(BaseDataset):
         if "norm" in self.data_type:
             video = video * 2.0 - 1.0
 
-        out = {"video": video, "video_name": video_name}
+        # clip name
+        out = {"video": video, "video_name": clip_name}
         return out
 
 
-def get_dataloader(split="train", size=256, data_type="two", part_idx=0, part_num=1):
+def get_dataloader(split="train", size=224, data_type="two", part_idx=0, part_num=1):
     dataset = VFHQInferDataset(split=split, size=size, data_type=data_type, part_idx=part_idx, part_num=part_num)
     loader = data.DataLoader(dataset=dataset, batch_size=1, shuffle=True, num_workers=16, drop_last=False)
     return loader
