@@ -348,7 +348,9 @@ class VFHQInferDataset(data.Dataset):
         with open(self.files_names_json, "r") as f:
             self.data_dict = json.load(f)
 
-        self.clips = self.data_dict["clips"]
+        all_clips = self.data_dict["clips"]
+        cur_part_clips = all_clips[self.part_idx :: self.part_num]
+        self.clips = cur_part_clips
 
     def __len__(self):
         return len(self.clips)
