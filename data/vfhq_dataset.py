@@ -7,9 +7,15 @@ import random
 import cv2
 import numpy as np
 import torch
+import torch.utils.data as data
 import torchvision.transforms.functional as TF
 
+from cv2 import COLOR_BGR2RGB, COLOR_RGB2BGR, cvtColor, imread
+from skimage import img_as_float32, img_as_ubyte
+from torchvision.io import read_video
+
 from data.base_dataset import BaseDataset
+from data.data_utils import crop_square_video_tensor, read_image
 from util.load_mats import load_lm3d
 from util.preprocess import estimate_norm
 
@@ -296,3 +302,77 @@ class VFHQDataset(BaseDataset):
             "msks": mask_tensor,
             "M": M_tensor,
         }
+
+
+def read_image(image_path, size=256, to_cuda=False):
+    img = imread(image_path)
+    img = crop_square(img, size=size)
+    img = img_as_float32(cvtColor(img, COLOR_BGR2RGB))
+    img = np.array(img, dtype="float32").transpose((2, 0, 1))
+    img = torch.from_numpy(img)
+    if to_cuda:
+        img = img.unsqueeze(0).cuda()
+
+    return img
+
+
+class VFHQInferDataset(BaseDataset):
+    """
+    Dataset of videos, each video can be represented as:
+      - '.mp4' or '.gif'
+      - folder with all frames
+    """
+
+    def __init__(self, split, size=256, data_type="two", part_idx=0, part_num=1) -> None:
+        super().__init__()
+        self.size = size
+        self.split = split
+        self.part_idx = part_idx
+        self.part_num = part_num
+        self.data_type = data_type
+        if split == "train":
+            self.video_dir = os.path.join(
+                "../data", "VFHQ_datasets_extracted", "VFHQ-Train", "extracted_cropped_face_results"
+            )
+            self.files_names_json = os.path.join(
+                "../data", "VFHQ_datasets_extracted", "VFHQ-Train", "extracted_cropped_face_results_file_names.json"
+            )
+        else:
+            self.video_dir = os.path.join(
+                "../data", "VFHQ_datasets_extracted", "VFHQ-Test", "extracted_cropped_face_results"
+            )
+            self.files_names_json = os.path.join(
+                "../data", "VFHQ_datasets_extracted", "VFHQ-Test", "extracted_cropped_face_results_file_names.json"
+            )
+
+        with open(self.files_names_json, "r") as f:
+            self.data_dict = json.load(f)
+
+        self.clips = self.data_dict["clips"]
+
+    def __len__(self):
+        return len(self.clips)
+
+    def __getitem__(self, index):
+        clip_name = self.clips[index]
+        video_name = self.data_dict[clip_name]["video_name"]
+        frame_names = self.data_dict[clip_name]["frames"]
+
+        T = len(frame_names)
+
+        frame_paths = [os.path.join(self.video_dir, video_name, clip_name, frame_name) for frame_name in frame_names]
+        frame_paths = [frame_path.strip() for frame_path in frame_paths]
+        frames = [read_image(frame_path, self.size) for frame_path in frame_paths]
+        video = torch.stack(frames, dim=0)
+
+        if "norm" in self.data_type:
+            video = video * 2.0 - 1.0
+
+        out = {"video": video, "video_name": video_name}
+        return out
+
+
+def get_dataloader(split="train", size=256, data_type="two", part_idx=0, part_num=1):
+    dataset = VFHQInferDataset(split=split, size=size, data_type=data_type, part_idx=part_idx, part_num=part_num)
+    loader = data.DataLoader(dataset=dataset, batch_size=1, shuffle=True, num_workers=16, drop_last=False)
+    return loader

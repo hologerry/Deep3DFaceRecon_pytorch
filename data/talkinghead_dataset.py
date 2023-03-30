@@ -12,7 +12,7 @@ from torchvision.io import read_video
 from data.data_utils import crop_square_video_tensor, read_image
 
 
-class VFHQDataset(data.Dataset):
+class TalkingHeadDataset(data.Dataset):
     def __init__(self, split, size=256, data_type="two", part_idx=0, part_num=1) -> None:
         super().__init__()
         self.size = size
@@ -58,6 +58,6 @@ class VFHQDataset(data.Dataset):
 
 
 def get_dataloader(split="train", size=256, data_type="two", part_idx=0, part_num=1):
-    dataset = VFHQDataset(split=split, size=size, data_type=data_type, part_idx=part_idx, part_num=part_num)
+    dataset = TalkingHeadDataset(split=split, size=size, data_type=data_type, part_idx=part_idx, part_num=part_num)
     loader = data.DataLoader(dataset=dataset, batch_size=1, shuffle=True, num_workers=16, drop_last=False)
     return loader
