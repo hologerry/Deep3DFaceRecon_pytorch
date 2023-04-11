@@ -381,6 +381,6 @@ class CelebvhqInferDataset(data.Dataset):
 
 
 def get_dataloader(split="train", size=224, data_type="two", part_idx=0, part_num=1):
-    dataset = CelebvhqInferDataset(split=split, size=size, data_type=data_type, part_idx=part_idx, part_num=part_num)
+    dataset = CelebvhqInferDataset(size=size, part_idx=part_idx, part_num=part_num)
     loader = data.DataLoader(dataset=dataset, batch_size=1, shuffle=True, num_workers=16, drop_last=False)
     return loader
