@@ -373,8 +373,6 @@ class CelebvhqInferDataset(data.Dataset):
 
         # fps = meta["video_fps"]
         video = crop_square_video_tensor(video, size=self.size)
-        if "norm" in self.data_type:
-            video = video * 2.0 - 1.0
 
         out = {"video": video, "video_name": video_basename}
         return out
