@@ -12,6 +12,7 @@ from io import BytesIO
 import cv2
 import numpy as np
 import torch
+import torch.utils.data as data
 import torchvision.transforms.functional as TF
 
 from imageio import mimread
@@ -20,6 +21,7 @@ from scipy.io import loadmat, savemat
 from skimage import img_as_float32, io
 from skimage.color import gray2rgb
 from torch.utils.data import Dataset
+from torchvision.io import read_video
 from torchvision.io import read_video as t_read_video
 
 import util.util as util
@@ -31,6 +33,7 @@ from data.base_dataset import (
     get_affine_mat,
     get_transform,
 )
+from data.data_utils import crop_square_video_tensor, read_image
 from data.image_folder import make_dataset
 from util.load_mats import load_lm3d
 from util.preprocess import align_img, estimate_norm
@@ -338,3 +341,46 @@ class CelebvhqDataset(BaseDataset):
             "msks": mask_tensor,
             "M": M_tensor,
         }
+
+
+class CelebvhqInferDataset(data.Dataset):
+    def __init__(self, size=224, part_idx=0, part_num=1):
+        self.size = size
+        self.part_idx = part_idx
+        self.part_num = part_num
+        self.vide_names_json = os.path.join("../data", "CelebV-HQ_downloaded", "processed_35666_videos_names.json")
+        self.video_dir = os.path.join("../data", "CelebV-HQ_downloaded", "processed_35666")
+
+        with open(self.vide_names_json) as f:
+            all_videos = json.load(f)["videos"]
+
+        self.videos = all_videos[self.part_idx :: self.part_num]
+
+    def __len__(self):
+        return len(self.videos)
+
+    def __getitem__(self, idx):
+        video_name = self.videos[idx]
+        if ".mp4" not in video_name:
+            video_name += ".mp4"
+        video_basename = video_name.split(".")[0]
+        video_file = os.path.join(self.video_dir, video_name)
+
+        video, _, meta = read_video(video_file, pts_unit="sec")
+
+        video = video.float() / 255.0
+        video = video.permute(0, 3, 1, 2)
+
+        # fps = meta["video_fps"]
+        video = crop_square_video_tensor(video, size=self.size)
+        if "norm" in self.data_type:
+            video = video * 2.0 - 1.0
+
+        out = {"video": video, "video_name": video_basename}
+        return out
+
+
+def get_dataloader(split="train", size=224, data_type="two", part_idx=0, part_num=1):
+    dataset = CelebvhqInferDataset(split=split, size=size, data_type=data_type, part_idx=part_idx, part_num=part_num)
+    loader = data.DataLoader(dataset=dataset, batch_size=1, shuffle=True, num_workers=16, drop_last=False)
+    return loader

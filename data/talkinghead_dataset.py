@@ -49,7 +49,7 @@ class TalkingHeadDataset(data.Dataset):
         video = video.permute(0, 3, 1, 2)
 
         # fps = meta["video_fps"]
-        video = crop_square_video_tensor(video, size=224)
+        video = crop_square_video_tensor(video, size=self.size)
         if "norm" in self.data_type:
             video = video * 2.0 - 1.0
 

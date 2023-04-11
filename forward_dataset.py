@@ -9,7 +9,8 @@ from torchvision.utils import save_image
 from tqdm import tqdm
 
 # from data.talkinghead_dataset import get_dataloader
-from data.vfhq_dataset import get_dataloader
+# from data.vfhq_dataset import get_dataloader
+from data.celebvhq_dataset import get_dataloader
 from face_recon.face_shape_recon import FaceShapeRecon
 
 
@@ -22,9 +23,9 @@ def cat_arrays_dicts(coeffs_dicts):
 
 @torch.no_grad()
 def main(args):
-
     # face_shape_recon = FaceShapeRecon(checkpoint_path="./checkpoints/talking_head_all_recon_8gpu_80ep/epoch_24.pth")
-    face_shape_recon = FaceShapeRecon(checkpoint_path="./checkpoints/vfhq_8gpu_100ep/epoch_100.pth")
+    # face_shape_recon = FaceShapeRecon(checkpoint_path="./checkpoints/vfhq_8gpu_100ep/epoch_100.pth")
+    face_shape_recon = FaceShapeRecon(checkpoint_path="./checkpoints/celebvhq_8gpu_100ep/epoch_100.pth")
     data_loader = get_dataloader(
         split=args.split, size=224, data_type="two", part_idx=args.part_idx, part_num=args.part_num
     )
@@ -80,7 +81,8 @@ if __name__ == "__main__":
         f"GPU job {args.job_idx}/{args.job_num}, gpu {args.gpu_idx}/{args.gpu_num}, part {args.part_idx}/{args.part_num}"
     )
     # args.output_coeffs_dir = f"../data/TalkingHead-1KH_datasets/{args.split}_face_coeffs/"
-    args.output_coeffs_dir = f"../data/VFHQ_datasets_extracted_face_coeffs/{args.split}/"
+    # args.output_coeffs_dir = f"../data/VFHQ_datasets_extracted_face_coeffs/{args.split}/"
+    args.output_coeffs_dir = f"../data/CelebV-HQ_downloaded/face_coeffs"
     os.makedirs(args.output_coeffs_dir, exist_ok=True)
 
     main(args)
